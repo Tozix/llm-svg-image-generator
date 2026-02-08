@@ -1,31 +1,13 @@
-# Build stage
-FROM node:22-alpine AS builder
-
+FROM node:22.19-slim
+LABEL authors='Tozix' version=1.1.0
 WORKDIR /app
-
-COPY package.json package-lock.json ./
-RUN npm ci
-
-COPY tsconfig.json ./
-COPY src ./src
+COPY package*.json ./
+COPY . .
+RUN apt update -y && apt install -y openssl openresolv nano curl unzip
+RUN npm install -g npm@latest
+RUN npm i
+# Собираем проект
 RUN npm run build
 
-# Production stage
-FROM node:22-alpine
-
-WORKDIR /app
-
-COPY package.json package-lock.json ./
-RUN npm ci --omit=dev
-
-COPY --from=builder /app/dist ./dist
-COPY public ./public
-COPY prompts ./prompts
-COPY library ./library
-
-RUN mkdir -p output config
-
-ENV NODE_ENV=production
-EXPOSE 3000
-
-CMD ["node", "dist/main.js"]
+# Запускаем приложение
+CMD ["npm", "start"]

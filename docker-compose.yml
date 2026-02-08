@@ -9,3 +9,7 @@ services:
       - ./config:/app/config
       - ./prompts:/app/prompts
       - ./library:/app/library
+      - /app/node_modules
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
