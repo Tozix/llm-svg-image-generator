@@ -1,7 +1,8 @@
-Сгенерируй пиксель-арт SVG {{width}}x{{height}}. Детальный вид объекта при приближении — дом, здание, NPC, предмет.
-2D вид спереди (или под углом), как если бы игрок подошёл вплотную и рассматривает объект.
-ЗАПРОС: {{description}}
+Generate pixel art SVG {{width}}x{{height}}. Detailed view of an object in the environment.
+REQUEST: {{description}}
 {{accents}}
 
-ТЕХНИКИ: пиксель 8x8, палитра 32-64 цвета, дизеринг. Без анимаций. Узнаваемый силуэт, без перегрузки деталями.
-ЛИМИТ: не более {{maxSvgElements}} элементов (path, rect, circle). Верни ТОЛЬКО чистый SVG с viewBox "0 0 {{width}} {{height}}" без пояснений.
+TECHNIQUES: 8x8 pixel size, 32-64 color palette, dithering. No animations.
+LIMIT: No more than {{maxSvgElements}} elements.
+COMPLEXITY: Adaptive.
+Return ONLY clean SVG with viewBox "0 0 {{width}} {{height}}".

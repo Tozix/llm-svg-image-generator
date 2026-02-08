@@ -32,6 +32,9 @@ import {
   loadLibrary,
   findByType,
   getElementSvg,
+  saveLibraryEntry,
+  generateElementId,
+  type LibraryEntry,
 } from './library';
 import { log, logDebug, warn, error as logError } from './logger';
 
@@ -332,6 +335,7 @@ export class SVGGenerator {
 
   /**
    * Генерирует SVG-фрагмент для одного элемента (viewBox под размер области элемента).
+   * Включает retry-логику для повышения надёжности.
    */
   private async generateFragment(
     element: SceneElement,
@@ -371,12 +375,36 @@ export class SVGGenerator {
       { role: 'user', content: userPrompt },
     ];
 
-    const svgContent = await this.fetchLLMContent(messages);
-    let svgCode = this.extractSVGCode(svgContent, Math.round(fragmentWidth), Math.round(fragmentHeight));
-    if (!this.isValidSVG(svgCode)) {
-      throw new Error(`Невалидный SVG фрагмент для элемента ${element.id}`);
+    const maxRetries = MAX_VALIDATION_RETRIES;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        logDebug(`Генерация фрагмента ${element.id}, попытка ${attempt}/${maxRetries}`);
+        const svgContent = await this.fetchLLMContent(messages);
+        let svgCode = this.extractSVGCode(svgContent, w, h);
+        
+        if (!this.isValidSVG(svgCode)) {
+          if (attempt === maxRetries) {
+            throw new Error(`Невалидный SVG фрагмент для элемента ${element.id} после ${maxRetries} попыток`);
+          }
+          warn(`Невалидный SVG фрагмент ${element.id}, повтор ${attempt}/${maxRetries}`);
+          continue;
+        }
+        
+        logDebug(`Фрагмент ${element.id} успешно сгенерирован`);
+        return svgCode;
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        if (attempt === maxRetries) {
+          logError(`Фрагмент ${element.id} не сгенерирован после ${maxRetries} попыток`, err);
+          throw err;
+        }
+        logDebug(`Ошибка генерации фрагмента ${element.id}: ${msg}, повтор ${attempt}/${maxRetries}`);
+        await new Promise(r => setTimeout(r, 1000 * attempt)); // Экспоненциальная задержка
+      }
     }
-    return svgCode;
+    
+    throw new Error(`Фрагмент ${element.id} не сгенерирован`);
   }
 
   /**
@@ -411,6 +439,7 @@ export class SVGGenerator {
 
   /**
    * Объединяет фрагменты в один SVG: корневой viewBox 0 0 width height, группы по zIndex с translate и опционально scale для библиотечных элементов.
+   * Улучшенная версия с детальным логированием и восстановлением после ошибок.
    */
   private mergeFragments(
     elements: SceneElement[],
@@ -424,36 +453,75 @@ export class SVGGenerator {
 
     const sorted = [...elements].sort((a, b) => a.zIndex - b.zIndex);
     const groups: string[] = [];
+    const errors: string[] = [];
 
     for (const el of sorted) {
       const data = fragmentByElementId.get(el.id);
-      if (!data) continue;
+      if (!data) {
+        logDebug(`Фрагмент ${el.id} не найден в данных, пропуск`);
+        continue;
+      }
 
       try {
+        // Валидация входных данных
+        if (!data.svg || typeof data.svg !== 'string') {
+          throw new Error('Пустой или невалидный SVG код');
+        }
+
         const dom = new JSDOM(data.svg, { contentType: 'image/svg+xml' });
         const doc = dom.window.document;
         const svgRoot = doc.querySelector('svg');
-        if (!svgRoot) continue;
+        
+        if (!svgRoot) {
+          throw new Error('Отсутствует корневой элемент SVG');
+        }
 
-        const px = el.gridX * cellW;
-        const py = el.gridY * cellH;
-        const innerHtml = svgRoot.innerHTML;
-        const targetW = el.gridW * cellW;
-        const targetH = el.gridH * cellH;
+        const px = Math.round(el.gridX * cellW);
+        const py = Math.round(el.gridY * cellH);
+        const innerHtml = svgRoot.innerHTML.trim();
+        
+        if (!innerHtml) {
+          warn(`Фрагмент ${el.id} имеет пустое содержимое, пропуск`);
+          continue;
+        }
+
+        const targetW = Math.round(el.gridW * cellW);
+        const targetH = Math.round(el.gridH * cellH);
         let transform = `translate(${px},${py})`;
+        
         if (data.sourceWidth != null && data.sourceHeight != null && data.sourceWidth > 0 && data.sourceHeight > 0) {
           const sx = targetW / data.sourceWidth;
           const sy = targetH / data.sourceHeight;
-          transform += ` scale(${sx},${sy})`;
+          transform += ` scale(${sx.toFixed(4)},${sy.toFixed(4)})`;
         }
-        groups.push(`<g transform="${transform}">${innerHtml}</g>`);
-      } catch {
-        logDebug(`Пропуск фрагмента ${el.id} при мерже`);
+        
+        groups.push(`<g transform="${transform}" data-element-id="${el.id}">${innerHtml}</g>`);
+        logDebug(`Фрагмент ${el.id} успешно добавлен в мерж`);
+        
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        errors.push(`${el.id}: ${msg}`);
+        logDebug(`Ошибка мержа фрагмента ${el.id}: ${msg}`);
       }
     }
 
+    if (errors.length > 0) {
+      warn(`При мерже возникли ошибки: ${errors.join('; ')}`);
+    }
+
     const backgroundRect = `<rect x="0" y="0" width="${canvasWidth}" height="${canvasHeight}" fill="${backgroundColor}"/>`;
-    const root = `<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${canvasWidth} ${canvasHeight}" width="${canvasWidth}" height="${canvasHeight}">${backgroundRect}${groups.join('')}</svg>`;
+    
+    // Добавляем метаданные для отладки
+    const debugComment = `<!-- Generated with ${sorted.length} elements, ${groups.length} successfully merged, ${errors.length} errors -->`;
+    
+    const root = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${canvasWidth} ${canvasHeight}" width="${canvasWidth}" height="${canvasHeight}">
+  ${debugComment}
+  ${backgroundRect}
+  ${groups.join('\n  ')}
+</svg>`;
+    
+    log(`Мерж завершён: ${groups.length}/${fragmentByElementId.size} фрагментов`);
     return root;
   }
 
@@ -1056,6 +1124,114 @@ export class SVGGenerator {
       `Пакетная генерация завершена: ${results.length}/${descriptions.length} успешно`,
     );
     return results;
+  }
+
+  /**
+   * Сохраняет сгенерированный элемент в библиотеку для переиспользования.
+   * Автоматически классифицирует тип элемента и генерирует уникальный id.
+   */
+  async saveToLibrary(
+    svgCode: string,
+    description: string,
+    width: number,
+    height: number,
+    style: 'pixelart' | 'detailed' = 'pixelart',
+    tags?: string[],
+  ): Promise<string> {
+    try {
+      // Классифицируем тип элемента
+      const elementType = await this.classifyElementType(description);
+      
+      // Генерируем уникальный id
+      const id = generateElementId(elementType);
+      
+      // Создаём запись для библиотеки
+      const entry: LibraryEntry = {
+        id,
+        type: elementType,
+        description,
+        width,
+        height,
+        style,
+        createdAt: new Date().toISOString(),
+        tags: tags ?? [],
+      };
+      
+      // Сохраняем в библиотеку
+      await saveLibraryEntry(entry, svgCode);
+      
+      log(`Элемент "${id}" (${elementType}) сохранён в библиотеку`);
+      return id;
+      
+    } catch (err) {
+      logError('Ошибка сохранения элемента в библиотеку', err);
+      throw err;
+    }
+  }
+
+  /**
+   * Генерирует и автоматически сохраняет все элементы сцены в библиотеку.
+   * Использует декомпозицию для выделения отдельных элементов.
+   */
+  async generateAndSaveToLibrary(
+    description: string,
+    accents?: string,
+    style: 'pixelart' | 'detailed' = 'pixelart',
+  ): Promise<string[]> {
+    const savedIds: string[] = [];
+    
+    try {
+      log(`Декомпозиция сцены для сохранения в библиотеку…`);
+      const elements = await this.decomposeScene(description, accents ?? '', false);
+      
+      const canvasWidth = this.imageConfig.width;
+      const canvasHeight = this.imageConfig.height;
+      
+      // Генерируем каждый элемент и сохраняем
+      for (let i = 0; i < elements.length; i++) {
+        const el = elements[i];
+        
+        try {
+          // Классифицируем тип элемента если не указан
+          const elementType = el.elementType ?? await this.classifyElementType(el.description);
+          
+          // Генерируем фрагмент
+          const fragmentSvg = await this.generateFragment(el, description);
+          
+          // Вычисляем размеры фрагмента
+          const { width: fragW, height: fragH } = gridToPixels(
+            el.gridX,
+            el.gridY,
+            el.gridW,
+            el.gridH,
+            canvasWidth,
+            canvasHeight,
+          );
+          
+          const id = await this.saveToLibrary(
+            fragmentSvg,
+            el.description,
+            Math.round(fragW),
+            Math.round(fragH),
+            style,
+            [elementType, `zIndex:${el.zIndex}`],
+          );
+          
+          savedIds.push(id);
+          log(`Элемент ${i + 1}/${elements.length}: ${id} сохранён`);
+          
+        } catch (err) {
+          logError(`Ошибка сохранения элемента ${el.id}: ${err instanceof Error ? err.message : String(err)}`);
+        }
+      }
+      
+      log(`В библиотеку сохранено ${savedIds.length}/${elements.length} элементов`);
+      return savedIds;
+      
+    } catch (err) {
+      logError('Ошибка генерации и сохранения в библиотеку', err);
+      throw err;
+    }
   }
 }
 

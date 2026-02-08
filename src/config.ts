@@ -88,7 +88,7 @@ export const COMPOSITE_CONCURRENCY = numEnv('COMPOSITE_CONCURRENCY', 'compositeC
 export const MAX_GENERATION_TOKENS = numEnv('MAX_GENERATION_TOKENS', 'maxGenerationTokens', 8000, 2000, 32000);
 
 /** Максимум элементов в SVG (path, rect, circle, line и т.д.) — ограничивает сложность и время генерации. По умолчанию 80. */
-export const MAX_SVG_ELEMENTS = numEnv('MAX_SVG_ELEMENTS', 'maxSvgElements', 80, 20, 200);
+export const MAX_SVG_ELEMENTS = numEnv('MAX_SVG_ELEMENTS', 'maxSvgElements', 1000, 20, 2000);
 
 /** Ширина сцены (режим scene). По умолчанию 640. Ограничено 256–2048. */
 export const SCENE_WIDTH = numEnv('SCENE_WIDTH', 'sceneWidth', 640, 256, 2048);

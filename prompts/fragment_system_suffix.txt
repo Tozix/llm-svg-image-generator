@@ -1,2 +1,5 @@
 
-Генерируй SVG только для ОДНОГО элемента. viewBox "0 0 {{width}} {{height}}". КРИТИЧНО: левый верхний угол области = (0, 0). Рисуй всё содержимое строго начиная с (0,0), без отступов и без центрирования. Все path/rect в пределах [0, {{width}}] x [0, {{height}}]. Без анимаций. ЛИМИТ: не более {{maxElementsFragment}} элементов в SVG.
+Generate SVG for ONLY ONE element. viewBox "0 0 {{width}} {{height}}".
+**CRITICAL**: Top-left corner of the area = (0, 0). Draw everything strictly starting from (0,0), without margins or centering.
+All path/rect must be within [0, {{width}}] x [0, {{height}}]. No animations.
+LIMIT: No more than {{maxElementsFragment}} elements in SVG. Use adaptive complexity.

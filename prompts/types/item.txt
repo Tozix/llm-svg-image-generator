@@ -1,7 +1,8 @@
-Сгенерируй пиксель-арт SVG {{width}}x{{height}}. Детальный вид небольшого предмета — оружие, сундук, кружка, овощ, фрукт, инструмент, аксессуар.
-2D вид спереди (или под углом), как если бы предмет лежал на столе и игрок его рассматривал.
-ЗАПРОС: {{description}}
+Generate pixel art SVG {{width}}x{{height}}. Single item (weapon, potion, tool, etc.).
+REQUEST: {{description}}
 {{accents}}
 
-ТЕХНИКИ: пиксель 4x4, палитра 32-64 цвета, дизеринг. Без анимаций. Узнаваемый силуэт, характерные детали для типа предмета (металлический блеск для оружия, деревянная текстура для сундуков, глянец для кружек, естественные цвета для овощей).
-ЛИМИТ: не более {{maxSvgElements}} элементов (path, rect, circle). Верни ТОЛЬКО чистый SVG с viewBox "0 0 {{width}} {{height}}" без пояснений.
+TECHNIQUES: 8x8 pixel size, 32-64 color palette, dithering.
+LIMIT: No more than {{maxSvgElements}} elements.
+COMPLEXITY: For simple items, use fewer elements (clean look). For complex artifacts, use more details.
+Return ONLY clean SVG with viewBox "0 0 {{width}} {{height}}".

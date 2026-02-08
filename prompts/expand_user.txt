@@ -1,5 +1,43 @@
-Оригинальный запрос: {{description}}
-{{accentsLine}}
-Тип: один предмет, статичный SVG 1024x1024.
+Enhance this description for pixel art SVG generation.
 
-Преврати это в промпт для нейросети-генератора SVG: конкретный технический бриф, по которому ИИ сгенерирует пиксель-арт в виде SVG-кода.
+REQUEST: {{description}}
+
+{{accentsLine}}
+
+# REQUIREMENTS FOR PIXEL ART
+
+## Style Guidelines
+- **Pixel size**: 8x8 virtual pixels (each "pixel" in SVG should represent ~8x8 screen pixels)
+- **Palette**: 32-64 colors maximum
+- **Dithering**: Use ordered dithering for smooth gradients
+- **No anti-aliasing**: Shapes must have sharp, aliased edges
+
+## Composition
+- **Center the main subject** in the {{width}}x{{height}} canvas
+- **Clear silhouette** against background
+- **Balanced composition** with visual hierarchy
+- **Depth**: Background → Midground → Foreground
+
+## Color Guidelines
+- **Limited palette**: No more than 64 colors total
+- **Cohesive palette**: Colors should harmonize
+- **Shading**: Use 2-3 shades per surface (light, mid, shadow)
+- **Highlight**: Add 1-2 highlight tones on top surfaces
+- **Outline**: Dark outline (1-2 pixels) around main shapes
+
+## Technical
+- **ALL coordinates must be integers** (no decimals like 10.5)
+- **Use simple shapes**: rect, path with L/H/V commands
+- **Combine adjacent pixels** of same color into single paths
+- **No animations**, no `<animate>`, no CSS transitions
+
+## Examples of Enhanced Descriptions
+
+BAD: "A sword"
+GOOD: "A fantasy longsword with a golden hilt, intricate crossguard with gemstone, worn leather grip. Silver blade with faint blue enchantment glow. 3/4 view angle, centered composition, dark fantasy aesthetic."
+
+BAD: "A forest"
+GOOD: "A dense medieval forest with tall pine trees, moss-covered rocks, fallen logs with mushrooms. Shafts of golden sunset light filtering through canopy. Layered depth: distant hazy trees, midground oaks, detailed foreground foliage. Spooky yet beautiful atmosphere."
+
+# OUTPUT
+Return ONLY the enhanced description, 2-4 paragraphs, detailed and visual.

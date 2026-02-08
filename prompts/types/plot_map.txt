@@ -1,10 +1,9 @@
-Сгенерируй пиксель-арт SVG {{width}}x{{height}}. Фрагмент карты (plot) для MMORPG — вид строго сверху.
-Схематично: только самые крупные объекты (здания, реки, дороги, лес, холмы). Тайлы будут склеиваться в глобальную карту.
+Generate pixel art SVG {{width}}x{{height}}. Map fragment (top-down view).
+REQUEST: {{description}}
 {{biomeLine}}
 {{edgesLines}}
 
-ЗАПРОС: {{description}}
-{{accents}}
-
-ТЕХНИКИ: пиксель 8x8, палитра 32-64 цвета, дизеринг. Без анимаций. Узнаваемые силуэты.
-ЛИМИТ: не более {{maxSvgElements}} элементов (path, rect, circle). Верни ТОЛЬКО чистый SVG с viewBox "0 0 {{width}} {{height}}" без пояснений.
+TECHNIQUES: 8x8 pixel size, 32-64 color palette, dithering. No animations.
+LIMIT: No more than {{maxSvgElements}} elements.
+COMPLEXITY: Adaptive. Use up to {{maxSvgElements}} elements for detailed maps.
+Return ONLY clean SVG with viewBox "0 0 {{width}} {{height}}".
