@@ -1,0 +1,6 @@
+[
+  {"description":"Киберпанк улица с неоновыми вывесками","accents":"дождь, летающие машины, граффити","type":"plot_view","fileName":"cyberpunk_street"},
+  {"description":"Фэнтези замок на облаке","accents":"летающие острова, магические порталы","type":"plot_view","fileName":"cloud_castle"},
+  {"description":"Огненный дракон","accents":"чешуя, крылья, дым","type":"mob","fileName":"fire_dragon"},
+  {"description":"Дно океана с затонувшим кораблем","accents":"кораллы, стайки рыб, сокровища","type":"plot_view","fileName":"sunken_ship"}
+]

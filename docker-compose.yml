@@ -1,0 +1,11 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    env_file: .env
+    volumes:
+      - ./output:/app/output
+      - ./config:/app/config
+      - ./prompts:/app/prompts
+      - ./library:/app/library

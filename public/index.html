@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Генератор изображений MMORPG</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Генератор изображений MMORPG</h1>
+    <p class="subtitle">Пиксель-арт 8-16 bit для текстовой MMORPG</p>
+
+    <section id="authSection" class="auth-section">
+      <div id="authFormWrap" class="auth-form-wrap">
+        <form id="authForm" class="form auth-form">
+          <label for="username">Логин</label>
+          <input type="text" id="username" name="username" required>
+          <label for="password">Пароль</label>
+          <input type="password" id="password" name="password" required>
+          <button type="submit" id="authSubmitBtn">Войти</button>
+        </form>
+        <p class="auth-hint">Логин и пароль задаются администратором (переменные API_USER, API_PASSWORD на сервере).</p>
+        <div id="authError" class="error hidden"></div>
+      </div>
+      <div id="authLoggedWrap" class="auth-logged hidden">
+        <span>Вы вошли.</span>
+        <button type="button" id="logoutBtn">Выйти</button>
+      </div>
+    </section>
+
+    <nav class="tabs" id="mainTabs" aria-label="Разделы">
+      <button type="button" class="tab active" data-tab="generation">Генерация</button>
+      <button type="button" class="tab" data-tab="library">Библиотека</button>
+      <button type="button" class="tab" data-tab="admin">Админка</button>
+    </nav>
+
+    <section id="sectionGeneration" class="tab-panel active">
+      <form id="form" class="form">
+        <label for="description">Описание *</label>
+        <textarea id="description" name="description" rows="3" required placeholder="Например: Киберпанк город ночью в дождь с неоновыми вывесками"></textarea>
+
+        <label for="accents">Акценты / детали</label>
+        <input type="text" id="accents" name="accents" placeholder="Например: летающие такси, мокрый асфальт">
+
+        <label for="type">Тип</label>
+        <select id="type" name="type">
+          <option value="mob">Моб (монстр)</option>
+          <option value="npc">NPC (мутант, человек)</option>
+          <option value="player">Внешний вид игрока</option>
+          <option value="plot_map">Plot-карта (вид сверху)</option>
+          <option value="plot_view">Вид plot из глаз игрока</option>
+          <option value="object_detail">Zoom объекта (дом, NPC, предмет)</option>
+        </select>
+
+        <label class="checkbox-label" id="compositeWrap">
+          <input type="checkbox" id="composite" name="composite" value="1">
+          Композитная сцена (только для «Вид plot»)
+        </label>
+
+        <label class="checkbox-label" id="useLibraryWrap">
+          <input type="checkbox" id="useLibrary" name="useLibrary" value="1">
+          Использовать библиотеку элементов
+        </label>
+
+        <label class="checkbox-label" id="sceneViewWrap">
+          <input type="checkbox" id="sceneView" name="sceneView" value="first_person">
+          Вид из глаз героя (первый человек)
+        </label>
+
+        <div id="mapOptionsWrap" class="map-options hidden">
+          <label for="mapBiome">Биом фрагмента карты</label>
+          <select id="mapBiome" name="mapBiome">
+            <option value="">— описание выше —</option>
+            <option value="смешанный лес">Смешанный лес</option>
+            <option value="равнина">Равнина</option>
+            <option value="речная долина">Речная долина</option>
+            <option value="холмистая местность">Холмистая местность</option>
+            <option value="степь">Степь</option>
+            <option value="городской квартал">Городской квартал</option>
+            <option value="побережье">Побережье</option>
+          </select>
+          <p class="map-edges-hint">Границы (стыковка с соседними тайлами):</p>
+          <label for="edgeN">Север (N)</label>
+          <input type="text" id="edgeN" name="edgeN" placeholder="Например: река входит с севера">
+          <label for="edgeS">Юг (S)</label>
+          <input type="text" id="edgeS" name="edgeS" placeholder="Например: переход в степь">
+          <label for="edgeW">Запад (W)</label>
+          <input type="text" id="edgeW" name="edgeW" placeholder="Например: дорога вдоль границы">
+          <label for="edgeE">Восток (E)</label>
+          <input type="text" id="edgeE" name="edgeE" placeholder="Например: граница леса">
+        </div>
+
+        <button type="submit" id="submitBtn">Сгенерировать</button>
+      </form>
+
+      <div id="loader" class="loader hidden">
+        <div class="spinner"></div>
+        <p>Генерация изображения… Это может занять несколько минут.</p>
+      </div>
+
+      <div id="error" class="error hidden"></div>
+
+      <div id="result" class="result hidden">
+        <h2>Результат</h2>
+        <div class="result-image-wrap">
+          <img id="resultImage" src="" alt="Сгенерированное изображение">
+        </div>
+        <div class="result-links">
+          <a id="linkPng" href="" download="">Скачать PNG</a>
+          <a id="linkSvg" href="" download="">Скачать SVG</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="sectionLibrary" class="tab-panel">
+      <h2>Библиотека элементов</h2>
+      <p class="library-hint">Добавьте элементы (окно, дверь, фонарь) — они будут подставляться в композитные сцены.</p>
+      <form id="libraryForm" class="form library-form">
+        <label for="libDescription">Описание элемента *</label>
+        <input type="text" id="libDescription" name="description" required placeholder="Например: светящееся окно в неоновой рамке">
+        <button type="submit" id="librarySubmitBtn">Сгенерировать и добавить в библиотеку</button>
+      </form>
+      <div id="libraryLoader" class="loader hidden">
+        <div class="spinner"></div>
+        <p>Генерация элемента…</p>
+      </div>
+      <div id="libraryError" class="error hidden"></div>
+      <div id="libraryList" class="library-list"></div>
+    </section>
+
+    <section id="sectionAdmin" class="tab-panel">
+      <h2>Админка</h2>
+
+      <div class="admin-subtabs">
+        <button type="button" class="admin-tab active" data-admin-tab="prompts">Промпты</button>
+        <button type="button" class="admin-tab" data-admin-tab="params">Параметры генерации</button>
+        <button type="button" class="admin-tab" data-admin-tab="test">Тестовая генерация</button>
+      </div>
+
+      <div id="adminPrompts" class="admin-panel active">
+        <p class="admin-hint">Список шаблонов промптов. Выберите файл, отредактируйте и сохраните.</p>
+        <div class="prompts-row">
+          <div class="prompts-list-wrap">
+            <label for="promptsList">Файл промпта</label>
+            <select id="promptsList" class="prompts-select"></select>
+            <button type="button" id="promptsLoadBtn">Загрузить</button>
+          </div>
+          <div class="prompts-editor-wrap">
+            <label for="promptContent">Содержимое</label>
+            <textarea id="promptContent" class="prompt-textarea" rows="16" placeholder="Выберите файл и нажмите «Загрузить»"></textarea>
+            <button type="button" id="promptsSaveBtn">Сохранить</button>
+            <span id="promptsSaveStatus" class="save-status"></span>
+          </div>
+        </div>
+      </div>
+
+      <div id="adminParams" class="admin-panel">
+        <p class="admin-hint">Параметры по умолчанию для генерации. Сохраняются в config. Для применения части параметров может потребоваться перезапуск.</p>
+        <form id="paramsForm" class="form params-form">
+          <div class="params-grid">
+            <label>sceneWidth <input type="number" id="paramSceneWidth" min="256" max="2048" step="1"></label>
+            <label>sceneHeight <input type="number" id="paramSceneHeight" min="256" max="2048" step="1"></label>
+            <label>objectSize <input type="number" id="paramObjectSize" min="64" max="1024" step="1"></label>
+            <label>mapWidth <input type="number" id="paramMapWidth" min="256" max="1024" step="1"></label>
+            <label>mapHeight <input type="number" id="paramMapHeight" min="256" max="1024" step="1"></label>
+            <label>maxConcurrentJobs <input type="number" id="paramMaxConcurrentJobs" min="1" max="20" step="1"></label>
+            <label class="checkbox-label">compositeScene <input type="checkbox" id="paramCompositeScene"></label>
+            <label>gridCols <input type="number" id="paramGridCols" min="1" max="32" step="1"></label>
+            <label>gridRows <input type="number" id="paramGridRows" min="1" max="32" step="1"></label>
+            <label>compositeConcurrency <input type="number" id="paramCompositeConcurrency" min="1" max="20" step="1"></label>
+            <label>maxGenerationTokens <input type="number" id="paramMaxGenerationTokens" min="2000" max="32000" step="500"></label>
+            <label>maxSvgElements <input type="number" id="paramMaxSvgElements" min="20" max="200" step="1"></label>
+            <label>pixelScale <input type="number" id="paramPixelScale" min="1" max="16" step="1"></label>
+            <label>outputFormat
+              <select id="paramOutputFormat">
+                <option value="png">png</option>
+                <option value="jpg">jpg</option>
+                <option value="webp">webp</option>
+              </select>
+            </label>
+            <label>quality <input type="number" id="paramQuality" min="1" max="100" step="1"></label>
+            <label>backgroundColor <input type="text" id="paramBackgroundColor" placeholder="#0a0a1a"></label>
+          </div>
+          <button type="submit" id="paramsSaveBtn">Сохранить параметры</button>
+          <span id="paramsSaveStatus" class="save-status"></span>
+        </form>
+      </div>
+
+      <div id="adminTest" class="admin-panel">
+        <p class="admin-hint">Быстрая проверка генерации с текущими настройками и промптами.</p>
+        <form id="testForm" class="form test-form">
+          <label for="testDescription">Описание *</label>
+          <input type="text" id="testDescription" required placeholder="Например: Кристалл в пещере">
+          <label for="testType">Тип</label>
+          <select id="testType">
+            <option value="mob">mob</option>
+            <option value="npc">npc</option>
+            <option value="player">player</option>
+            <option value="plot_map">plot_map</option>
+            <option value="plot_view">plot_view</option>
+            <option value="object_detail">object_detail</option>
+          </select>
+          <label for="testWidth">Ширина (опционально)</label>
+          <input type="number" id="testWidth" min="64" max="2048" placeholder="по умолчанию">
+          <label for="testHeight">Высота (опционально)</label>
+          <input type="number" id="testHeight" min="64" max="2048" placeholder="по умолчанию">
+          <button type="submit" id="testSubmitBtn">Запустить тест</button>
+        </form>
+        <div id="testLoader" class="loader hidden">
+          <div class="spinner"></div>
+          <p>Тестовая генерация…</p>
+        </div>
+        <div id="testError" class="error hidden"></div>
+        <div id="testResult" class="result hidden">
+          <h3>Результат теста</h3>
+          <div class="result-image-wrap">
+            <img id="testResultImage" src="" alt="Тестовое изображение">
+          </div>
+          <div class="result-links">
+            <a id="testLinkPng" href="" download="">Скачать PNG</a>
+            <a id="testLinkSvg" href="" download="">Скачать SVG</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

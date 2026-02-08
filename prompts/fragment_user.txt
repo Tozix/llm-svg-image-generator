@@ -1,0 +1,5 @@
+Контекст сцены: {{sceneContext}}
+
+Элемент (нарисуй только это): {{elementDescription}}
+
+Область {{width}}×{{height}} px. Начало координат (0,0) — левый верхний угол. Не более {{maxElementsFragment}} элементов. Верни ТОЛЬКО SVG с viewBox="0 0 {{width}} {{height}}".
