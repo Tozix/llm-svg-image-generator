@@ -5,7 +5,8 @@ export type GenerationType =
   | 'player'
   | 'plot_map'
   | 'plot_view'
-  | 'object_detail';
+  | 'object_detail'
+  | 'item';
 
 /** Внутренний режим генератора */
 export type GenerationMode = 'scene' | 'object' | 'character' | 'map';
@@ -25,6 +26,7 @@ export const PLOT_MAP_SIZE = 512;
 export const PLOT_VIEW_WIDTH = 640;
 export const PLOT_VIEW_HEIGHT = 480;
 export const OBJECT_DETAIL_SIZE = 256;
+export const ITEM_SIZE = 192;
 
 /** Маппинг типа генерации в конфигурацию */
 export function getGenerationTypeConfig(
@@ -35,6 +37,7 @@ export function getGenerationTypeConfig(
     plotViewWidth?: number;
     plotViewHeight?: number;
     objectDetailSize?: number;
+    itemSize?: number;
   },
 ): GenerationTypeConfig {
   const charSize = overrides?.characterSize ?? CHARACTER_SIZE;
@@ -42,6 +45,7 @@ export function getGenerationTypeConfig(
   const viewW = overrides?.plotViewWidth ?? PLOT_VIEW_WIDTH;
   const viewH = overrides?.plotViewHeight ?? PLOT_VIEW_HEIGHT;
   const objSize = overrides?.objectDetailSize ?? OBJECT_DETAIL_SIZE;
+  const itemSz = overrides?.itemSize ?? ITEM_SIZE;
 
   switch (type) {
     case 'mob':
@@ -72,6 +76,12 @@ export function getGenerationTypeConfig(
         width: objSize,
         height: objSize,
       };
+    case 'item':
+      return {
+        mode: 'object',
+        width: itemSz,
+        height: itemSz,
+      };
     default:
       return {
         mode: 'scene',
@@ -89,4 +99,5 @@ export const VALID_GENERATION_TYPES: GenerationType[] = [
   'plot_map',
   'plot_view',
   'object_detail',
+  'item',
 ];

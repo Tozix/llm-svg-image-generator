@@ -31,7 +31,7 @@ program
   .option('-a, --accents <text>', 'Дополнительные акценты и детали')
   .option(
     '-t, --type <type>',
-    'Тип: mob, npc, player, plot_map, plot_view, object_detail',
+    'Тип: mob, npc, player, plot_map, plot_view, object_detail, item',
     'plot_view',
   )
   .option('-o, --output <dir>', 'Папка для сохранения', './output')
@@ -202,6 +202,7 @@ program
       plot_map: 'Plot-карта (вид сверху)',
       plot_view: 'Вид plot из глаз игрока',
       object_detail: 'Zoom объекта (дом, NPC, предмет)',
+      item: 'Небольшие предметы (оружие, сундуки, кружки, овощи)',
     };
 
     VALID_GENERATION_TYPES.forEach((t) => {
